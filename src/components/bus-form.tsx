@@ -66,26 +66,29 @@ const BusForm = () => {
                     </Button>
                 </Box>
                 <Divider />
-                <Box component='form' onSubmit={formik.handleSubmit} sx={{ display: 'flex', gap: 2, alignItems: 'stretch' }}>
-                    <TextField
-                        label='Bus Name'
-                        variant='outlined'
-                        name='busName'
-                        value={formik.values.busName}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={formik.touched.busName && Boolean(formik.errors.busName)}
-                        helperText={formik.touched.busName && formik.errors.busName}
-                        fullWidth
-                    />
-                    <Button type='submit' variant='contained' color='primary' sx={{
-                        minWidth: 'fit-content'
-                    }}
-                        loading={formik.isSubmitting}
-                    >
-                        Register New Bus
-                    </Button>
-                </Box>
+                {
+                    user?.role === 'driver' && <Box component='form' onSubmit={formik.handleSubmit} sx={{ display: 'flex', gap: 2, alignItems: 'stretch' }}>
+                        <TextField
+                            label='Bus Name'
+                            variant='outlined'
+                            name='busName'
+                            value={formik.values.busName}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            error={formik.touched.busName && Boolean(formik.errors.busName)}
+                            helperText={formik.touched.busName && formik.errors.busName}
+                            fullWidth
+                        />
+                        <Button type='submit' variant='contained' color='primary' sx={{
+                            minWidth: 'fit-content'
+                        }}
+                            loading={formik.isSubmitting}
+                        >
+                            Register New Bus
+                        </Button>
+                    </Box>
+                }
+
                 <Box sx={{
                     border: '1px solid #DDD',
                     borderRadius: '4px',

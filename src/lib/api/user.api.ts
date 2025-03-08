@@ -17,6 +17,8 @@ export const saveOrUpdateUserLocation = async (user: Partial<User> & { id?: stri
         const q = query(collection(firebaseDB, collectionKey.users), where('normalizedUserName', '==', normalizedUserName))
         const snapshot = await getDocs(q)
         if (!snapshot.empty) {
+            const userQuery = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))[0] as User
+            if (userQuery.role !== user.role) throw new Error(`You are a ${userQuery.role}. Please adjust the role.`)
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))[0]
         }
         const res = await addDoc(collection(firebaseDB, collectionKey.users), {

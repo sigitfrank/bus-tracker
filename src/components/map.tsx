@@ -31,7 +31,9 @@ const Map = () => {
     userPosition
   })
 
-  if (!busPosition || (!userPosition && user?.role === 'passenger')) return null
+  if (!busPosition || (!userPosition && user?.role === 'passenger')) return <Box sx={{
+    padding: 4
+  }}>Gathering coordinates...</Box>
   const center = user?.role === 'passenger' ? userPosition : busPosition
   if (!center) return
   return (
@@ -57,12 +59,14 @@ const Map = () => {
           }}>
             <MapContainer center={center} zoom={13}>
               <TileLayer
-                attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <Marker position={busPosition} icon={busIcon}>
                 <Popup>
-                  Bus position: {distance}km away from you
+                  {
+                    user?.role === 'driver' ? 'You are the driver. Pick all the users' : `Bus position: ${distance}km away from you`
+                  }
                 </Popup>
               </Marker>
               {
@@ -75,7 +79,7 @@ const Map = () => {
                 })
               }
 
-              {route.length > 0 && <Polyline positions={route} color='#DDD' />}
+              {route.length > 0 && <Polyline positions={route} color='#b80000' />}
             </MapContainer>
           </Box>
         </Box>

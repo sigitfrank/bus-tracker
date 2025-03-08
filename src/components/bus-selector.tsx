@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { firebaseDB } from '../lib/firebase'
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore'
-import { Button, Divider, List, ListItem, ListItemButton, ListItemText } from '@mui/material'
+import { Button, Divider, List, ListItem, ListItemButton, ListItemText, Typography } from '@mui/material'
 import { Bus } from '../lib/types/bus.type'
 import useAppStore from '../lib/store/app-store'
 import { DirectionsBus } from '@mui/icons-material'
@@ -39,6 +39,7 @@ const BusSelector = () => {
       flexDirection: 'column',
       gap: 1
     }}>
+      {buses.length === 0 && <Typography>-No bus registered-</Typography>}
       {buses.map((bus, index) => (<Fragment key={bus.id}>
         <ListItem disablePadding >
           <ListItemButton
