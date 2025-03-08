@@ -1,4 +1,4 @@
-import { serverTimestamp, setDoc, doc, addDoc, collection, query, where, getDocs, getDoc } from 'firebase/firestore'
+import { serverTimestamp, setDoc, doc, addDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore'
 import { firebaseDB } from '../firebase'
 import { Bus } from '../types/bus.type'
 import { collectionKey } from '../query/keys'
@@ -30,14 +30,15 @@ export const saveOrUpdateBusLocation = async (bus: Partial<Bus> & { id?: string 
     }
 }
 
-export const getBusById = async (busId: string) => {
+export const getBusById = (busId: string, callback: (bus: Bus) => void) => {
     const docRef = doc(firebaseDB, collectionKey.buses, busId)
-    const docSnap = await getDoc(docRef)
-    if (docSnap.exists()) {
-        const data = docSnap.data()
-        const coordinates = JSON.parse(data.coordinates ?? '[]')
-        return coordinates
-    } else {
-        console.log('No such bus!')
-    }
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const bus = { id: docSnap.id, ...docSnap.data(), coordinates: JSON.parse(docSnap.data().coordinates) }
+            callback(bus as Bus)
+        } else {
+            console.log('No such bus!')
+        }
+    })
+    return unsubscribe
 }

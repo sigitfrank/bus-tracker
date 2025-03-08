@@ -16,14 +16,15 @@ const LoginForm = () => {
     const handleSubmit = async (data: unknown) => {
         try {
             const user = data as User
-            setUser(data as User)
-            await saveOrUpdateUserLocation({
+
+            const res = await saveOrUpdateUserLocation({
                 name: user.name,
                 role: user.role,
                 coordinates: [0, 0],
             })
+            setUser(res as User)
+            localStorage.setItem('user', JSON.stringify(res))
             navigate('/')
-            localStorage.setItem('user', JSON.stringify(data))
         } catch (error) {
             if (error instanceof Error) {
                 toast.error(error.message)
@@ -51,7 +52,7 @@ const LoginForm = () => {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
             >
-                {({ errors, touched }) => (
+                {({ errors, touched, isSubmitting }) => (
                     <Form>
                         <Box display='flex' flexDirection='column' gap={2}>
                             <Typography sx={{ textAlign: 'center' }}>Please input role correctly</Typography>
@@ -76,7 +77,7 @@ const LoginForm = () => {
                                 <MenuItem value='driver'>Driver</MenuItem>
                                 <MenuItem value='passenger'>Passenger</MenuItem>
                             </Field>
-                            <Button type='submit' variant='contained' color='primary'>Submit</Button>
+                            <Button type='submit' variant='contained' color='primary' loading={isSubmitting}>Submit</Button>
                         </Box>
                     </Form>
                 )}

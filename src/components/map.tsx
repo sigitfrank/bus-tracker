@@ -1,11 +1,12 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
-import { useState, useEffect } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Box, Button, Grid2, Typography } from '@mui/material'
-import { useNavigate, useParams } from 'react-router-dom'
-import { getBusById, saveOrUpdateBusLocation } from '../lib/api/bus.api'
+import { useNavigate } from 'react-router-dom'
 import useAppStore from '../lib/store/app-store'
+import useBus from '../lib/hooks/use-bus'
+import useUser from '../lib/hooks/use-user'
+import useDistance from '../lib/hooks/use-distance'
 
 const busIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/1068/1068631.png",
@@ -21,64 +22,18 @@ const userIcon = new L.Icon({
 
 const Map = () => {
   const { user } = useAppStore()
-  const params = useParams()
   const navigate = useNavigate()
-  const [busPosition, setBusPosition] = useState<[number, number] | null>(null)
-  const [userPosition, setUserPosition] = useState<[number, number] | null>(null)
-  const [route, setRoute] = useState<[number, number][]>([])
-  const [distance, setDistance] = useState<string>('0')
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords
-          if (user?.name === 'driver') {
-            setBusPosition([latitude, longitude])
-            saveOrUpdateBusLocation({
-              id: params.id as string,
-              coordinates: [latitude, longitude]
-            })
-          } else {
-            setUserPosition([latitude, longitude])
-          }
-        },
-        (error) => {
-          console.error('Error getting location:', error)
-        },
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-      )
-    }
-  }, [user, params.id])
+  const { busPosition } = useBus()
+  const { userPosition, allUsers } = useUser()
+  const { distance, route } = useDistance({
+    busPosition,
+    userPosition
+  })
 
-  // GET bus coordinates for user to see the bus
-  useEffect(() => {
-    if (!params.id) return
-    getBusById(params.id as string).then((coordinates) => {
-      setBusPosition(coordinates)
-    })
-  }, [params.id])
-
-  // GET routes between user and bus
-  useEffect(() => {
-    const fetchRoute = async () => {
-      if (!busPosition || !userPosition) return
-
-      const response = await fetch(
-        `https://router.project-osrm.org/route/v1/driving/${busPosition[1]},${busPosition[0]};${userPosition[1]},${userPosition[0]}?geometries=geojson`
-      )
-      const data = await response.json()
-      if (!data.routes) return
-      const coordinates = data.routes[0]?.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng])
-      setRoute(coordinates)
-      const distanceInKm = (data.routes[0]?.distance / 1000).toFixed(2)
-      setDistance(distanceInKm)
-    }
-
-    fetchRoute()
-  }, [busPosition, userPosition])
-
-  if (!busPosition || !userPosition) return null
+  if (!busPosition || (!userPosition && user?.role === 'passenger')) return null
+  const center = user?.role === 'passenger' ? userPosition : busPosition
+  if (!center) return
   return (
     <Grid2 container justifyContent="center">
       <Grid2 size={{ xs: 12, md: 9 }}>
@@ -100,7 +55,7 @@ const Map = () => {
             borderRadius: '8px',
             overflow: 'hidden'
           }}>
-            <MapContainer center={userPosition} zoom={13}>
+            <MapContainer center={center} zoom={13}>
               <TileLayer
                 attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
@@ -110,11 +65,16 @@ const Map = () => {
                   Bus position: {distance}km away from you
                 </Popup>
               </Marker>
-              <Marker position={userPosition} icon={userIcon}>
-                <Popup>
-                  You are here
-                </Popup>
-              </Marker>
+              {
+                allUsers.map((allUser) => {
+                  return <Marker key={allUser.id} position={allUser.coordinates} icon={userIcon}>
+                    <Popup>
+                      {allUser.id === user?.id ? 'You are here' : `It is ${allUser.name}`}
+                    </Popup>
+                  </Marker>
+                })
+              }
+
               {route.length > 0 && <Polyline positions={route} color='#DDD' />}
             </MapContainer>
           </Box>
